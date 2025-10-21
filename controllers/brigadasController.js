@@ -112,21 +112,18 @@ static async create(req, res) {
     }
   }
 
-  static async getByConglomerado(req, res) {
-    try {
-      const brigada = await BrigadasModel.getByConglomerado(req.params.conglomerado_id);
-      
-      if (!brigada) {
-        return res.status(404).json({ error: 'Brigada no encontrada' });
-      }
-      
-      res.json(brigada);
-    } catch (error) {
-      console.error('Error en getByConglomerado:', error);
-      res.status(500).json({ error: error.message });
-    }
+static async getByConglomerado(req, res) {
+  try {
+    const brigada = await BrigadasModel.getByConglomerado(req.params.conglomerado_id);
+    
+    // ✅ Si no hay brigada, devolver null (no es un error)
+    res.json(brigada || null);
+    
+  } catch (error) {
+    console.error('Error en getByConglomerado:', error);
+    res.status(500).json({ error: error.message });
   }
-
+}
   static async getByEstado(req, res) {
     try {
       const brigadas = await BrigadasModel.getByEstado(req.params.estado);

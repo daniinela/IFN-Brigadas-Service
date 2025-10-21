@@ -156,7 +156,7 @@ class BrigadistasModel {
     return data || [];
   }
 
-  // ✅ CORREGIDO: brigadas_brigadistas (con 's')
+
   static async getConDetalles(id) {
     const { data, error } = await supabase
       .from('brigadistas')

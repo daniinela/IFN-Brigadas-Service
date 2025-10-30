@@ -1,4 +1,5 @@
 // controllers/brigadistasController.js
+import axios from 'axios';
 import BrigadistasModel from '../models/brigadistasModel.js';
 import supabase from '../config/database.js';
 

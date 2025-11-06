@@ -25,21 +25,22 @@ class BrigadasModel {
   }
 
   static async create(brigada) {
-    const { data, error } = await supabase
-      .from('brigadas')
-      .insert([{
-        id: crypto.randomUUID(),
-        conglomerado_id: brigada.conglomerado_id,
-        estado: 'formacion', // Siempre empieza en formación
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString()
-      }])
-      .select()
-      .single();
-    
-    if (error) throw error;
-    return data;
-  }
+  const { data, error } = await supabase
+    .from('brigadas')
+    .insert([{
+      id: crypto.randomUUID(),
+      conglomerado_id: brigada.conglomerado_id,
+      creado_por_coord_id: brigada.creado_por_coord_id || null, 
+      estado: 'formacion',
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString()
+    }])
+    .select()
+    .single();
+  
+  if (error) throw error;
+  return data;
+}
 
   static async update(id, updates) {
     const { data, error } = await supabase

@@ -29,7 +29,59 @@ class BrigadasController {
       res.status(500).json({ error: error.message });
     }
   }
+static async cancelar(req, res) {
+    try {
+      const { id } = req.params;
+      const { motivo } = req.body;
+      const coord_id = req.user?.id;
+      
+      if (!coord_id) {
+        return res.status(401).json({ error: 'Usuario no autenticado' });
+      }
 
+      if (!motivo || motivo.trim() === '') {
+        return res.status(400).json({ error: 'Motivo de cancelación requerido' });
+      }
+      
+      const brigada = await BrigadasModel.getById(id);
+      
+      if (!brigada) {
+        return res.status(404).json({ error: 'Brigada no encontrada' });
+      }
+
+      // Solo se pueden cancelar si están en formación o activas
+      if (!['formacion', 'activa'].includes(brigada.estado)) {
+        return res.status(400).json({ 
+          error: 'Solo se pueden cancelar brigadas en formación o activas',
+          estado_actual: brigada.estado
+        });
+      }
+      
+      const resultado = await BrigadasModel.cancelar(id, motivo, coord_id);
+      
+      // Desmarcar conglomerado
+      if (brigada.conglomerado_id) {
+        try {
+          const token = req.headers.authorization;
+          await axios.put(
+            `${process.env.CONGLOMERADOS_SERVICE_URL}/api/conglomerados/${brigada.conglomerado_id}`,
+            { tiene_brigada: false },
+            { headers: { Authorization: token } }
+          );
+        } catch (error) {
+          console.error('⚠️ Error desmarcando conglomerado:', error.message);
+        }
+      }
+      
+      res.json({ 
+        message: 'Brigada cancelada exitosamente',
+        brigada: resultado
+      });
+    } catch (error) {
+      console.error('Error en cancelar:', error);
+      res.status(500).json({ error: error.message });
+    }
+  }
   static async getConBrigadistas(req, res) {
     try {
       const { id } = req.params;
@@ -326,33 +378,19 @@ class BrigadasController {
         return res.status(404).json({ error: 'Brigada no encontrada' });
       }
 
-      // Solo se pueden eliminar brigadas en formación o canceladas
-      if (!['formacion', 'cancelada'].includes(brigada.estado)) {
+      // Solo se pueden eliminar brigadas ya canceladas
+      if (brigada.estado !== 'cancelada') {
         return res.status(400).json({ 
-          error: 'Solo se pueden eliminar brigadas en formación o canceladas',
-          estado_actual: brigada.estado
+          error: 'Solo se pueden eliminar brigadas canceladas',
+          estado_actual: brigada.estado,
+          sugerencia: 'Primero cancela la brigada con POST /:id/cancelar'
         });
       }
 
-      // ✅ Si se elimina la brigada, desmarcar el conglomerado
-      if (brigada.conglomerado_id) {
-        try {
-          const token = req.headers.authorization;
-          await axios.put(
-            `${process.env.CONGLOMERADOS_SERVICE_URL}/api/conglomerados/${brigada.conglomerado_id}`,
-            { tiene_brigada: false },
-            { headers: { Authorization: token } }
-          );
-        } catch (error) {
-          console.error('⚠️ Error desmarcando conglomerado:', error.message);
-          // No falla la eliminación
-        }
-      }
-      
       await BrigadasModel.delete(id);
       
       res.json({ 
-        message: 'Brigada eliminada exitosamente',
+        message: 'Brigada eliminada permanentemente',
         id: id
       });
     } catch (error) {

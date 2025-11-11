@@ -12,7 +12,36 @@ class BrigadasModel {
     if (error) throw error;
     return data || [];
   }
+static async delete(req, res) {
+    try {
+      const { id } = req.params;
+      
+      const brigada = await BrigadasModel.getById(id);
+      
+      if (!brigada) {
+        return res.status(404).json({ error: 'Brigada no encontrada' });
+      }
 
+      // Solo se pueden eliminar brigadas ya canceladas
+      if (brigada.estado !== 'cancelada') {
+        return res.status(400).json({ 
+          error: 'Solo se pueden eliminar brigadas canceladas',
+          estado_actual: brigada.estado,
+          sugerencia: 'Primero cancela la brigada con POST /:id/cancelar'
+        });
+      }
+
+      await BrigadasModel.delete(id);
+      
+      res.json({ 
+        message: 'Brigada eliminada permanentemente',
+        id: id
+      });
+    } catch (error) {
+      console.error('Error en delete:', error);
+      res.status(500).json({ error: error.message });
+    }
+  }
   static async getById(id) {
     const { data, error } = await supabase
       .from('brigadas')
@@ -58,10 +87,12 @@ class BrigadasModel {
   }
 
   static async delete(id) {
+    // Solo para limpieza extrema de BD
     const { error } = await supabase
       .from('brigadas')
       .delete()
-      .eq('id', id);
+      .eq('id', id)
+      .eq('estado', 'cancelada'); // Solo eliminar si YA está cancelada
     
     if (error) throw error;
     return true;

@@ -14,9 +14,7 @@ class BrigadasBrigadistasModel {
         estado_invitacion: 'pendiente',
         fecha_invitacion: new Date().toISOString(),
         fecha_inicio_trabajo: fechas.fecha_inicio || null,
-        fecha_fin_trabajo: fechas.fecha_fin || null,
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString()
+        fecha_fin_trabajo: fechas.fecha_fin || null
       }])
       .select()
       .single();
@@ -32,8 +30,7 @@ class BrigadasBrigadistasModel {
       .update({
         estado_invitacion: aceptada ? 'aceptada' : 'rechazada',
         fecha_respuesta: new Date().toISOString(),
-        motivo_rechazo: motivo_rechazo || null,
-        updated_at: new Date().toISOString()
+        motivo_rechazo: motivo_rechazo || null
       })
       .eq('id', id)
       .select()
@@ -144,8 +141,7 @@ class BrigadasBrigadistasModel {
       .from('brigadas_brigadistas')
       .update({
         fecha_inicio_trabajo: fechas.fecha_inicio,
-        fecha_fin_trabajo: fechas.fecha_fin,
-        updated_at: new Date().toISOString()
+        fecha_fin_trabajo: fechas.fecha_fin
       })
       .eq('id', id)
       .select()

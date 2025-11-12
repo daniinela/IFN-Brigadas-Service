@@ -35,40 +35,34 @@ class BrigadistasModel {
     return data;
   }
 
-  static async create(brigadista) {
-    const { data, error } = await supabase
-      .from('brigadistas')
-      .insert([{
-        user_id: brigadista.user_id,
-        municipio: brigadista.municipio,
-        titulos: brigadista.titulos || [],
-        experiencia_laboral: brigadista.experiencia_laboral || [],
-        rol: brigadista.rol,
-        disponibilidad: brigadista.disponibilidad || [],
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString()
-      }])
-      .select()
-      .single();
-    
-    if (error) throw error;
-    return data;
-  }
+static async create(brigadista) {
+  const { data, error } = await supabase
+    .from('brigadistas')
+    .insert([{
+      user_id: brigadista.user_id,
+      municipio_id: brigadista.municipio_id,
+      titulos: brigadista.titulos || [],
+      experiencia_laboral: brigadista.experiencia_laboral || [],
+      disponibilidad: brigadista.disponibilidad || []
+    }])
+    .select()
+    .single();
+  
+  if (error) throw error;
+  return data;
+}
 
-  static async update(id, updates) {
-    const { data, error } = await supabase
-      .from('brigadistas')
-      .update({
-        ...updates,
-        updated_at: new Date().toISOString()
-      })
-      .eq('id', id)
-      .select()
-      .single();
-    
-    if (error) throw error;
-    return data;
-  }
+ static async update(id, updates) {
+  const { data, error } = await supabase
+    .from('brigadistas')
+    .update(updates)
+    .eq('id', id)
+    .select()
+    .single();
+  
+  if (error) throw error;
+  return data;
+}
 
   static async delete(id) {
     const { error } = await supabase
@@ -89,6 +83,27 @@ class BrigadistasModel {
     if (error) throw error;
     return data || [];
   }
+//Nuevo para mis departamentos
+static async getByDepartamento(departamento_id) {
+  const { data: municipios } = await supabase
+    .from('municipios')
+    .select('id')
+    .eq('departamento_id', departamento_id);
+  
+  if (!municipios || municipios.length === 0) return [];
+  
+  const municipios_ids = municipios.map(m => m.id);
+  
+  const { data, error } = await supabase
+    .from('brigadistas')
+    .select('*')
+    .in('municipio_id', municipios_ids)
+    .eq('activo', true)
+    .eq('estado_solicitud', 'aprobado');
+  
+  if (error) throw error;
+  return data || [];
+}
 
   static async getByRol(rol) {
     const { data, error } = await supabase

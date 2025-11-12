@@ -53,16 +53,13 @@ static async delete(req, res) {
     return data;
   }
 
-  static async create(brigada) {
+static async create(brigada) {
   const { data, error } = await supabase
     .from('brigadas')
     .insert([{
-      id: crypto.randomUUID(),
       conglomerado_id: brigada.conglomerado_id,
-      creado_por_coord_id: brigada.creado_por_coord_id || null, 
-      estado: 'formacion',
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString()
+      creado_por_coord_id: brigada.creado_por_coord_id,
+      estado: 'formacion'
     }])
     .select()
     .single();
@@ -71,20 +68,17 @@ static async delete(req, res) {
   return data;
 }
 
-  static async update(id, updates) {
-    const { data, error } = await supabase
-      .from('brigadas')
-      .update({
-        ...updates,
-        updated_at: new Date().toISOString()
-      })
-      .eq('id', id)
-      .select()
-      .single();
-    
-    if (error) throw error;
-    return data;
-  }
+static async update(id, updates) {
+  const { data, error } = await supabase
+    .from('brigadas')
+    .update(updates)
+    .eq('id', id)
+    .select()
+    .single();
+  
+  if (error) throw error;
+  return data;
+}
 
   static async delete(id) {
     // Solo para limpieza extrema de BD
@@ -159,25 +153,22 @@ static async delete(req, res) {
   }
 
   // Cambiar estado de brigada
-  static async cambiarEstado(id, nuevoEstado) {
-    const estadosValidos = ['formacion', 'activa', 'completada', 'cancelada'];
-    if (!estadosValidos.includes(nuevoEstado)) {
-      throw new Error('Estado inválido');
-    }
-
-    const { data, error } = await supabase
-      .from('brigadas')
-      .update({
-        estado: nuevoEstado,
-        updated_at: new Date().toISOString()
-      })
-      .eq('id', id)
-      .select()
-      .single();
-    
-    if (error) throw error;
-    return data;
+static async cambiarEstado(id, nuevoEstado) {
+  const estadosValidos = ['formacion', 'activa', 'completada', 'cancelada'];
+  if (!estadosValidos.includes(nuevoEstado)) {
+    throw new Error('Estado inválido');
   }
+
+  const { data, error } = await supabase
+    .from('brigadas')
+    .update({ estado: nuevoEstado })
+    .eq('id', id)
+    .select()
+    .single();
+  
+  if (error) throw error;
+  return data;
+}
 }
 
 export default BrigadasModel;

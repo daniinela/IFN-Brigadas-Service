@@ -45,43 +45,32 @@ class BrigadistasController {
     }
   }
 
-  static async create(req, res) {
-    try {
-      const { user_id, municipio, titulos, experiencia_laboral, rol } = req.body;
-      
-      if (!user_id || !municipio || !rol) {
-        return res.status(400).json({ error: 'Faltan campos requeridos' });
-      }
-
-      const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-      if (!uuidRegex.test(user_id)) {
-        return res.status(400).json({ error: 'ID de usuario inválido' });
-      }
-
-      const rolesValidos = ['jefe', 'botanico', 'tecnico', 'coinvestigador'];
-      if (!rolesValidos.includes(rol)) {
-        return res.status(400).json({ error: 'Rol inválido' });
-      }
-
-      const existente = await BrigadistasModel.getByUserId(user_id);
-      if (existente) {
-        return res.status(409).json({ error: 'Usuario ya tiene perfil de brigadista' });
-      }
-
-      const nuevoBrigadista = await BrigadistasModel.create({
-        user_id,
-        municipio,
-        titulos: titulos || [],
-        experiencia_laboral: experiencia_laboral || [],
-        rol
-      });
-      
-      res.status(201).json(nuevoBrigadista);
-    } catch (error) {
-      console.error('Error en create:', error);
-      res.status(500).json({ error: error.message });
+static async create(req, res) {
+  try {
+    const { user_id, municipio_id, titulos, experiencia_laboral } = req.body;
+    
+    if (!user_id || !municipio_id) {
+      return res.status(400).json({ error: 'Faltan campos requeridos' });
     }
+
+    const existente = await BrigadistasModel.getByUserId(user_id);
+    if (existente) {
+      return res.status(409).json({ error: 'Usuario ya tiene perfil de brigadista' });
+    }
+
+    const nuevoBrigadista = await BrigadistasModel.create({
+      user_id,
+      municipio_id,
+      titulos: titulos || [],
+      experiencia_laboral: experiencia_laboral || []
+    });
+    
+    res.status(201).json(nuevoBrigadista);
+  } catch (error) {
+    console.error('Error en create:', error);
+    res.status(500).json({ error: error.message });
   }
+}
 
   static async update(req, res) {
     try {

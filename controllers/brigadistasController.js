@@ -219,6 +219,102 @@ class BrigadistasController {
       res.status(500).json({ error: error.message });
     }
   }
+// ===== SALA DE ESPERA =====
+
+static async getPendientes(req, res) {
+  try {
+    const brigadistas = await BrigadistasModel.getPendientes();
+    res.json(brigadistas);
+  } catch (error) {
+    console.error('Error en getPendientes:', error);
+    res.status(500).json({ error: error.message });
+  }
+}
+
+static async aprobar(req, res) {
+  try {
+    const { id } = req.params;
+    const { roles } = req.body;
+    const coord_id = req.user?.id;
+    
+    if (!coord_id) {
+      return res.status(401).json({ error: 'Usuario no autenticado' });
+    }
+
+    if (!Array.isArray(roles) || roles.length === 0) {
+      return res.status(400).json({ error: 'Debe asignar al menos un rol' });
+    }
+
+    const brigadista = await BrigadistasModel.getById(id);
+    if (!brigadista) {
+      return res.status(404).json({ error: 'Brigadista no encontrado' });
+    }
+
+    if (brigadista.estado_solicitud !== 'pendiente_revision') {
+      return res.status(400).json({ 
+        error: 'Solo se pueden aprobar solicitudes pendientes'
+      });
+    }
+
+    // 1. Aprobar
+    await BrigadistasModel.aprobar(id, coord_id);
+
+    // 2. Asignar roles
+    await BrigadistasSubrolModel.asignar(id, roles, coord_id);
+
+    // 3. Obtener con roles
+    const brigadistaActualizado = await BrigadistasModel.getConRoles(id);
+
+    res.json({
+      message: 'Brigadista aprobado',
+      brigadista: brigadistaActualizado
+    });
+
+  } catch (error) {
+    console.error('Error en aprobar:', error);
+    res.status(500).json({ error: error.message });
+  }
+}
+
+static async rechazar(req, res) {
+  try {
+    const { id } = req.params;
+    
+    const brigadista = await BrigadistasModel.getById(id);
+    if (!brigadista) {
+      return res.status(404).json({ error: 'Brigadista no encontrado' });
+    }
+
+    if (brigadista.estado_solicitud !== 'pendiente_revision') {
+      return res.status(400).json({ 
+        error: 'Solo se pueden rechazar solicitudes pendientes'
+      });
+    }
+
+    await BrigadistasModel.rechazar(id);
+
+    res.json({ message: 'Solicitud rechazada' });
+
+  } catch (error) {
+    console.error('Error en rechazar:', error);
+    res.status(500).json({ error: error.message });
+  }
+}
+
+static async getConRoles(req, res) {
+  try {
+    const brigadista = await BrigadistasModel.getConRoles(req.params.id);
+    
+    if (!brigadista) {
+      return res.status(404).json({ error: 'Brigadista no encontrado' });
+    }
+    
+    res.json(brigadista);
+  } catch (error) {
+    console.error('Error en getConRoles:', error);
+    res.status(500).json({ error: error.message });
+  }
+}
 }
 
 export default BrigadistasController;

@@ -523,6 +523,75 @@ static async cancelar(req, res) {
       res.status(500).json({ error: error.message });
     }
   }
+// ===== SALA DE ESPERA =====
+
+static async getPendientes() {
+  const { data, error } = await supabase
+    .from('brigadistas')
+    .select('*')
+    .eq('estado_solicitud', 'pendiente_revision')
+    .order('created_at', { ascending: true });
+  
+  if (error) throw error;
+  return data || [];
 }
+
+static async aprobar(id, aprobado_por) {
+  const { data, error } = await supabase
+    .from('brigadistas')
+    .update({
+      estado_solicitud: 'aprobado',
+      activo: true,
+      aprobado_por: aprobado_por,
+      updated_at: new Date().toISOString()
+    })
+    .eq('id', id)
+    .select()
+    .single();
+  
+  if (error) throw error;
+  return data;
+}
+
+static async rechazar(id) {
+  const { data, error } = await supabase
+    .from('brigadistas')
+    .update({
+      estado_solicitud: 'rechazado',
+      activo: false,
+      updated_at: new Date().toISOString()
+    })
+    .eq('id', id)
+    .select()
+    .single();
+  
+  if (error) throw error;
+  return data;
+}
+
+static async getConRoles(id) {
+  const { data, error } = await supabase
+    .from('brigadistas')
+    .select(`
+      *,
+      brigadistas_subrol!inner (
+        id,
+        activo,
+        fecha_asignacion,
+        sub_rol (
+          id,
+          codigo,
+          nombre,
+          descripcion
+        )
+      )
+    `)
+    .eq('id', id)
+    .eq('brigadistas_subrol.activo', true)
+    .single();
+  
+  if (error) throw error;
+  return data;
+    }}
 
 export default BrigadasController;

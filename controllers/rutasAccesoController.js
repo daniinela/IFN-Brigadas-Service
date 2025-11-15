@@ -88,7 +88,8 @@ class RutasAccesoController {
 
       const ruta = await RutasAccesoModel.getById(id);
       if (!ruta) {
-        return res.status(404).json({ error: 'Ruta no encontrada' });}
+        return res.status(404).json({ error: 'Ruta no encontrada' });
+      }
         const brigada = await BrigadasExpedicionModel.getById(ruta.brigada_id);
       if (brigada.jefe_brigada_id !== jefe_brigada_id) {
         return res.status(403).json({ 

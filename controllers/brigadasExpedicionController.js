@@ -84,7 +84,7 @@ class BrigadasExpedicionController {
       const nuevaBrigada = await BrigadasExpedicionModel.create({
         conglomerado_id,
         jefe_brigada_id,
-        diligenciado_por: req.body.diligenciado_por || jefe_brigada_id
+        diligenciado_por: req.body.diligenciado_por_id || jefe_brigada_id
       });
 
       res.status(201).json({

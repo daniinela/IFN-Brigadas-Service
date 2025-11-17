@@ -1,15 +1,13 @@
 import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
-import brigadistasRoutes from './routes/brigadistasRoutes.js';
 import brigadasRoutes from './routes/brigadasRoutes.js';
-import brigadasbrigadistasRoutes from './routes/brigadasbrigadistasRoutes.js';
 import supabase from './config/database.js'; 
 
 dotenv.config();
 
 const app = express();
-const PORT = process.env.PORT || 3002;
+const PORT = process.env.PORT || 3003;
 
 app.use(cors());
 app.use(express.json());
@@ -19,7 +17,7 @@ app.get('/health', async (req, res) => {
   try {
     // Verificar conexión a Supabase
     const { data, error } = await supabase
-      .from('brigadas')
+      .from('brigadas_expedicion')
       .select('count')
       .limit(1);
 
@@ -53,9 +51,7 @@ app.get('/health/simple', (req, res) => {
 });
 
 // Rutas
-app.use('/api/brigadistas', brigadistasRoutes);
-app.use('/api/brigadas', brigadasRoutes);
-app.use('/api/brigadas-brigadistas', brigadasbrigadistasRoutes);
+app.use('/api', brigadasRoutes);
 
 // Manejo global de errores
 app.use((err, req, res, next) => {

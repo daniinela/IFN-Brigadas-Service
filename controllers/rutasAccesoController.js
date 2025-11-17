@@ -17,10 +17,9 @@ class RutasAccesoController {
 
   static async create(req, res) {
     try {
-      const { 
-        brigada_id, tipo_ruta, medio_transporte,
-        tiempo_acceso, distancia_km
-      } = req.body;
+      // Acepta brigada_id desde params o body
+      const brigada_id = req.params.brigada_id || req.body.brigada_id;
+      const { tipo_ruta, medio_transporte, tiempo_acceso, distancia_km } = req.body;
       const jefe_brigada_id = req.user?.id;
 
       if (!jefe_brigada_id) {

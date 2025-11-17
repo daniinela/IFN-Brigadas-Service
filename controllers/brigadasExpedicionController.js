@@ -45,8 +45,6 @@ class BrigadasExpedicionController {
         });
       }
 
-      const token = req.headers.authorization;
-
       // Validar que el conglomerado existe y está en estado correcto
       let conglomerado;
       try {
@@ -116,7 +114,55 @@ class BrigadasExpedicionController {
 
   // JEFE_BRIGADA cambia el estado
   static async cambiarEstado(req, res) {
- const brigadaActualizada = await BrigadasExpedicionModel.cambiarEstado(id, estado);}
+    try {
+      const { id } = req.params;
+      const { estado } = req.body;
+      const jefe_brigada_id = req.user?.id;
+
+      if (!jefe_brigada_id) {
+        return res.status(401).json({ error: 'Usuario no autenticado' });
+      }
+
+      if (!estado) {
+        return res.status(400).json({ error: 'Estado requerido' });
+      }
+
+      const estadosValidos = ['formacion', 'en_transito', 'en_ejecucion', 'completada', 'cancelada'];
+      if (!estadosValidos.includes(estado)) {
+        return res.status(400).json({ error: 'Estado inválido', estados_validos: estadosValidos });
+      }
+
+      const brigada = await BrigadasExpedicionModel.getById(id);
+      if (!brigada) {
+        return res.status(404).json({ error: 'Brigada no encontrada' });
+      }
+
+      if (brigada.jefe_brigada_id !== jefe_brigada_id) {
+        return res.status(403).json({ error: 'No tienes permisos para modificar esta brigada' });
+      }
+
+      const transicionesValidas = {
+        'formacion': ['en_transito', 'cancelada'],
+        'en_transito': ['en_ejecucion', 'cancelada'],
+        'en_ejecucion': ['completada', 'cancelada'],
+        'completada': [],
+        'cancelada': []
+      };
+
+      if (!transicionesValidas[brigada.estado]?.includes(estado)) {
+        return res.status(400).json({ 
+          error: `No se puede cambiar de ${brigada.estado} a ${estado}`,
+          transiciones_validas: transicionesValidas[brigada.estado]
+        });
+      }
+
+      const brigadaActualizada = await BrigadasExpedicionModel.cambiarEstado(id, estado);
+      res.json({ message: 'Estado actualizado', brigada: brigadaActualizada });
+    } catch (error) {
+      console.error('Error en cambiarEstado:', error);
+      res.status(500).json({ error: error.message });
+    }
+  }
 
   // JEFE_BRIGADA registra fechas
   static async registrarFechas(req, res) {

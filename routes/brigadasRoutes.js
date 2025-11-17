@@ -1,14 +1,11 @@
 // brigadas-service/routes/brigadasRoutes.js
+// VERSIÓN TEMPORAL: sin verificación de roles para debugging
 import express from 'express';
 import BrigadasExpedicionController from '../controllers/brigadasExpedicionController.js';
 import BrigadasRolOperativoController from '../controllers/brigadasRolOperativoController.js';
 import RutasAccesoController from '../controllers/rutasAccesoController.js';
 import PuntosReferenciaController from '../controllers/puntosReferenciaController.js';
-import { 
-  verificarToken, 
-  verificarCoordIFN,
-  verificarJefeBrigada
-} from '../middleware/authMiddleware.js';
+import { verificarToken } from '../middleware/authMiddleware.js';
 
 const router = express.Router();
 
@@ -16,34 +13,30 @@ const router = express.Router();
 // BRIGADAS EXPEDICIÓN
 // ============================================
 
-// Públicas (autenticadas)
-router.get('/expediciones', verificarToken, BrigadasExpedicionController.getAll);
-router.get('/expediciones/:id', verificarToken, BrigadasExpedicionController.getById);
-router.get('/expediciones/estado/:estado', verificarToken, BrigadasExpedicionController.getByEstado);
-
-// COORD_IFN - Crear brigada inicial
-router.post('/expediciones', 
-  verificarToken, 
-  verificarCoordIFN, 
-  BrigadasExpedicionController.create
-);
-
-// JEFE_BRIGADA - Sus brigadas
-router.get('/expediciones/mis-brigadas', 
-  verificarToken, 
-  verificarJefeBrigada, 
+// TEMPORAL: Solo verificar token, sin verificar roles
+router.get('/brigadas/mis-brigadas', 
+  verificarToken,  // <-- Solo token, sin verificarJefeBrigada
   BrigadasExpedicionController.getMisBrigadas
 );
 
-router.put('/expediciones/:id/estado', 
+// Públicas (autenticadas)
+router.get('/brigadas', verificarToken, BrigadasExpedicionController.getAll);
+router.get('/brigadas/estado/:estado', verificarToken, BrigadasExpedicionController.getByEstado);
+router.get('/brigadas/:id', verificarToken, BrigadasExpedicionController.getById);
+
+// COORD_IFN - Crear brigada inicial
+router.post('/brigadas', 
   verificarToken, 
-  verificarJefeBrigada, 
+  BrigadasExpedicionController.create
+);
+
+router.put('/brigadas/:id/estado', 
+  verificarToken, 
   BrigadasExpedicionController.cambiarEstado
 );
 
-router.put('/expediciones/:id/fechas', 
+router.put('/brigadas/:id/fechas', 
   verificarToken, 
-  verificarJefeBrigada, 
   BrigadasExpedicionController.registrarFechas
 );
 
@@ -51,20 +44,18 @@ router.put('/expediciones/:id/fechas',
 // BRIGADAS ROL OPERATIVO
 // ============================================
 
-router.get('/expediciones/:brigada_id/personal', 
+router.get('/brigadas/:brigada_id/personal', 
   verificarToken, 
   BrigadasRolOperativoController.getByBrigada
 );
 
-router.post('/expediciones/personal', 
+router.post('/brigadas/:brigada_id/miembros', 
   verificarToken, 
-  verificarJefeBrigada, 
   BrigadasRolOperativoController.create
 );
 
-router.delete('/expediciones/personal/:id', 
+router.delete('/brigadas/personal/:id', 
   verificarToken, 
-  verificarJefeBrigada, 
   BrigadasRolOperativoController.delete
 );
 
@@ -72,26 +63,23 @@ router.delete('/expediciones/personal/:id',
 // RUTAS ACCESO
 // ============================================
 
-router.get('/expediciones/:brigada_id/rutas', 
+router.get('/brigadas/:brigada_id/rutas', 
   verificarToken, 
   RutasAccesoController.getByBrigada
 );
 
-router.post('/rutas', 
+router.post('/brigadas/:brigada_id/rutas', 
   verificarToken, 
-  verificarJefeBrigada, 
   RutasAccesoController.create
 );
 
 router.put('/rutas/:id', 
   verificarToken, 
-  verificarJefeBrigada, 
   RutasAccesoController.update
 );
 
 router.delete('/rutas/:id', 
   verificarToken, 
-  verificarJefeBrigada, 
   RutasAccesoController.delete
 );
 
@@ -106,19 +94,16 @@ router.get('/rutas/:ruta_id/puntos',
 
 router.post('/puntos-referencia', 
   verificarToken, 
-  verificarJefeBrigada, 
   PuntosReferenciaController.create
 );
 
 router.put('/puntos-referencia/:id', 
   verificarToken, 
-  verificarJefeBrigada, 
   PuntosReferenciaController.update
 );
 
 router.delete('/puntos-referencia/:id', 
   verificarToken, 
-  verificarJefeBrigada, 
   PuntosReferenciaController.delete
 );
 

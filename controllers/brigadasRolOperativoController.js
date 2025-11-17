@@ -19,7 +19,9 @@ class BrigadasRolOperativoController {
   // JEFE_BRIGADA asigna miembros a su brigada
   static async create(req, res) {
     try {
-      const { brigada_id, usuario_id, rol_operativo } = req.body;
+      // Acepta brigada_id desde params o body
+      const brigada_id = req.params.brigada_id || req.body.brigada_id;
+      const { usuario_id, rol_operativo } = req.body;
       const jefe_brigada_id = req.user?.id;
 
       if (!jefe_brigada_id) {

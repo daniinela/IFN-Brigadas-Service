@@ -30,7 +30,16 @@ class PuntosReferenciaModel {
     if (error) throw error;
     return data;
   }
-
+static async getById(id) {
+    const { data, error } = await supabase
+      .from('puntos_referencia')
+      .select('*')
+      .eq('id', id)
+      .maybeSingle();
+    
+    if (error) throw error;
+    return data;
+  }
   static async update(id, updates) {
     const { data, error } = await supabase
       .from('puntos_referencia')

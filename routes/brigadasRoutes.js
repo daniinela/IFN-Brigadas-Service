@@ -1,11 +1,13 @@
 // brigadas-service/routes/brigadasRoutes.js
-// VERSIÓN TEMPORAL: sin verificación de roles para debugging
 import express from 'express';
 import BrigadasExpedicionController from '../controllers/brigadasExpedicionController.js';
 import BrigadasRolOperativoController from '../controllers/brigadasRolOperativoController.js';
 import RutasAccesoController from '../controllers/rutasAccesoController.js';
 import PuntosReferenciaController from '../controllers/puntosReferenciaController.js';
-import { verificarToken } from '../middleware/authMiddleware.js';
+import { 
+  verificarToken,
+  verificarBrigadista  // 🆕 Nuevo middleware
+} from '../middleware/authMiddleware.js';
 
 const router = express.Router();
 
@@ -13,18 +15,15 @@ const router = express.Router();
 // BRIGADAS EXPEDICIÓN
 // ============================================
 
-// TEMPORAL: Solo verificar token, sin verificar roles
 router.get('/brigadas/mis-brigadas', 
-  verificarToken,  // <-- Solo token, sin verificarJefeBrigada
+  verificarToken,
   BrigadasExpedicionController.getMisBrigadas
 );
 
-// Públicas (autenticadas)
 router.get('/brigadas', verificarToken, BrigadasExpedicionController.getAll);
 router.get('/brigadas/estado/:estado', verificarToken, BrigadasExpedicionController.getByEstado);
 router.get('/brigadas/:id', verificarToken, BrigadasExpedicionController.getById);
 
-// COORD_IFN - Crear brigada inicial
 router.post('/brigadas', 
   verificarToken, 
   BrigadasExpedicionController.create
@@ -41,7 +40,29 @@ router.put('/brigadas/:id/fechas',
 );
 
 // ============================================
-// BRIGADAS ROL OPERATIVO
+// 🆕 RUTAS PARA BRIGADISTAS
+// ============================================
+
+router.get('/brigadistas/mis-invitaciones', 
+  verificarToken,
+  verificarBrigadista,  // 🆕 Proteger con middleware
+  BrigadasRolOperativoController.getMisInvitaciones
+);
+
+router.post('/brigadistas/invitaciones/:id/aceptar', 
+  verificarToken,
+  verificarBrigadista,  // 🆕 Proteger con middleware
+  BrigadasRolOperativoController.aceptarInvitacion
+);
+
+router.post('/brigadistas/invitaciones/:id/rechazar', 
+  verificarToken,
+  verificarBrigadista,  // 🆕 Proteger con middleware
+  BrigadasRolOperativoController.rechazarInvitacion
+);
+
+// ============================================
+// BRIGADAS ROL OPERATIVO (Jefe de Brigada)
 // ============================================
 
 router.get('/brigadas/:brigada_id/personal', 
@@ -58,7 +79,16 @@ router.delete('/brigadas/personal/:id',
   verificarToken, 
   BrigadasRolOperativoController.delete
 );
+router.post('/brigadas/:id/enviar-invitaciones', 
+  verificarToken,
+  BrigadasExpedicionController.enviarInvitaciones
+);
 
+// Eliminar miembro
+router.delete('/brigadas/miembros/:miembro_id', 
+  verificarToken,
+  BrigadasExpedicionController.eliminarMiembro
+);
 // ============================================
 // RUTAS ACCESO
 // ============================================

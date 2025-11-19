@@ -16,30 +16,40 @@ class PuntosReferenciaController {
     }
   }
 
-  // JEFE_BRIGADA registra punto (coordenadas vienen del GPS del dispositivo)
   static async create(req, res) {
     try {
       const { 
-        ruta_id, nombre_punto, latitud, 
-        longitud, error_gps_m
+        ruta_id, 
+        nombre_punto, 
+        latitud, 
+        longitud, 
+        error_gps_m
       } = req.body;
       const jefe_brigada_id = req.user?.id;
+
+      console.log('📥 Creando punto de referencia:', { 
+        ruta_id, nombre_punto, latitud, longitud, error_gps_m 
+      });
 
       if (!jefe_brigada_id) {
         return res.status(401).json({ error: 'Usuario no autenticado' });
       }
 
-      if (!ruta_id || !nombre_punto || !latitud || !longitud || error_gps_m === undefined) {
+      // ✅ Validación corregida
+      if (!ruta_id || !nombre_punto || !latitud || !longitud) {
         return res.status(400).json({ 
-          error: 'Todos los campos son requeridos' 
+          error: 'ruta_id, nombre_punto, latitud y longitud son obligatorios',
+          recibido: { ruta_id, nombre_punto, latitud, longitud, error_gps_m }
         });
       }
 
+      // Validar que la ruta existe
       const ruta = await RutasAccesoModel.getById(ruta_id);
       if (!ruta) {
         return res.status(404).json({ error: 'Ruta no encontrada' });
       }
 
+      // Validar permisos del jefe de brigada
       const brigada = await BrigadasExpedicionModel.getById(ruta.brigada_id);
       if (brigada.jefe_brigada_id !== jefe_brigada_id) {
         return res.status(403).json({ 
@@ -47,21 +57,28 @@ class PuntosReferenciaController {
         });
       }
 
+      // ✅ Crear punto con conversión explícita
       const nuevoPunto = await PuntosReferenciaModel.create({
         ruta_id,
-        nombre_punto,
-        latitud,
-        longitud,
-        error_gps_m
+        nombre_punto: nombre_punto.trim(),
+        latitud: String(latitud),
+        longitud: String(longitud),
+        error_gps_m: parseFloat(error_gps_m) || 0
       });
 
+      console.log('✅ Punto creado:', nuevoPunto.id);
+
       res.status(201).json({
+        success: true,
         message: 'Punto de referencia registrado',
         punto: nuevoPunto
       });
     } catch (error) {
-      console.error('Error en create:', error);
-      res.status(500).json({ error: error.message });
+      console.error('❌ Error en create punto:', error);
+      res.status(500).json({ 
+        error: error.message,
+        details: process.env.NODE_ENV === 'development' ? error.stack : undefined
+      });
     }
   }
 
@@ -75,9 +92,7 @@ class PuntosReferenciaController {
         return res.status(401).json({ error: 'Usuario no autenticado' });
       }
 
-      const puntos = await PuntosReferenciaModel.getByRuta(req.body.ruta_id);
-      const punto = puntos.find(p => p.id === id);
-
+      const punto = await PuntosReferenciaModel.getById(id);
       if (!punto) {
         return res.status(404).json({ error: 'Punto no encontrado' });
       }
@@ -108,9 +123,7 @@ class PuntosReferenciaController {
         return res.status(401).json({ error: 'Usuario no autenticado' });
       }
 
-      const puntos = await PuntosReferenciaModel.getByRuta(req.body.ruta_id);
-      const punto = puntos.find(p => p.id === id);
-
+      const punto = await PuntosReferenciaModel.getById(id);
       if (!punto) {
         return res.status(404).json({ error: 'Punto no encontrado' });
       }
